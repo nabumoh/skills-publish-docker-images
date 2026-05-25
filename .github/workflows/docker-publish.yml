@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,9 +31,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/nabumoh/skills-publish-docker-images/stackoverflown
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ghcr.io/nabumoh/skills-publish-docker-images/stackoverflown:main
+          tags: ${{ steps.meta.outputs.tags }}
